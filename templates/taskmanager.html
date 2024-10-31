@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Task Manager</title>
+    <link rel="stylesheet"  href="{{url_for('static',filename='styles.css')}}">
+    <style>
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+        }
+        .task-list {
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+        }
+        .task-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .task-list li:hover{
+            background-color: #f1f1f1;
+            border-color:black;
+        }
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .buttons button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .buttons button:hover {
+            background-color: #333;
+        }
+        .buttons button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+        }
+        .buttons button:active {
+            background-color: #111;
+        }
+        .selected {
+            background-color: #e2e6ea;
+        }
+        .notification {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Personal Task Manager</h1>
+        <ul id="taskList" class="task-list">
+            {% for record in records %}
+            <li>
+                <span>{{record[0]}}</span>
+                <span>{{record[1]}}</span>
+                <span>{{record[2]}}</span>
+                <span></span>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="buttons">
+            <button onclick="addTask()" id="addtask">Add Task</button>
+            <button id="removetask">Remove Task</button>
+            <button id="markcomplete">Mark complete</button>
+            <a href="{{url_for('history')}}"><button id="showhistory">History</button></a>
+        </div>
+        <div class="notification" id="notification"></div>
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="{{url_for('login')}}" style="color: red;">Logout</a>
+        </p>
+    </div>
+    <script>
+        function startCountdown(taskName,dateSpan,timeSpan,endTime, spanElement) {
+            const countdownInterval = setInterval(() => {
+                const now = new Date();
+                const remainingTime = endTime - now;
+
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    spanElement.textContent = "Task completed!";
+                    // Send value to Flask
+                    fetch('/timeup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ task: `${taskName}`,date: `${dateSpan}`,time:`${timeSpan}` }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Response from server:', data);
+                    });
+                    alert(`Time's up for: ${taskName}`);
+                    location.reload();
+
+                } else {
+                    const seconds = Math.floor((remainingTime / 1000) % 60);
+                    const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
+                    const hours = Math.floor((remainingTime / (1000 * 60 * 60)) % 24);
+                    const days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+
+                    spanElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                }
+            }, 1000);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const items = document.querySelectorAll("li");
+            items.forEach(item => {
+                const taskName = item.querySelector("span:nth-child(1)").textContent;
+                const dateSpan = item.querySelector("span:nth-child(2)").textContent;
+                const timeSpan = item.querySelector("span:nth-child(3)").textContent;
+
+                const endTime = new Date(`${dateSpan} ${timeSpan}`).getTime();
+                const timerSpan = item.querySelector("span:nth-child(4)");
+                startCountdown(taskName,dateSpan,timeSpan,new Date(endTime), timerSpan);
+            });
+        });
+        function addTask() {
+            const task = prompt("Enter task:");
+            const date = prompt("Enter date(YYYY-MM-DD):");
+            const time = prompt("Enter time(HH:MM):");
+            const newItem = document.createElement('li');
+            const span1 = document.createElement('span');
+            span1.textContent = task;
+            const span2 = document.createElement('span');
+            span2.textContent = date;
+            const span3 = document.createElement('span');
+            span3.textContent = time;
+            const span4 = document.createElement('span');
+            newItem.appendChild(span1);newItem.appendChild(span2);
+            newItem.appendChild(span3);newItem.appendChild(span4);
+            document.getElementById('taskList').appendChild(newItem);
+
+            const endTime = new Date(`${date} ${time}`).getTime();
+            startCountdown(new Date(endTime), span4);
+            location.reload();
+
+            if (task && date && time) {
+                fetch('/addtask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ task, date, time }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload(); // Refresh the page to see the new task
+                });
+            }
+        }
+
+        let selectedItem = null;
+
+        // Function to select an item
+        document.querySelectorAll('li').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove the 'selected' class from any previously selected item
+                if (selectedItem) {
+                    selectedItem.classList.remove('selected');
+                }
+                // Mark the currently clicked item as selected
+                selectedItem = this;
+                selectedItem.classList.add('selected');
+            });
+        });
+
+        
+        // Function to remove the selected item
+        document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('removetask').addEventListener('click', function() {
+            if (selectedItem) {
+                // Get the spans from the selected item
+                const spans = selectedItem.getElementsByTagName("span");
+                    const taskName = spans[0].textContent;
+                    const dateSpan = spans[1].textContent;
+                    const timeSpan = spans[2].textContent;
+                selectedItem.remove(); // Remove the selected <li>
+                removeTask(taskName,dateSpan,timeSpan);
+                location.reload();
+                selectedItem = null; // Reset the selected item
+            } else {
+                alert('Please select an item to remove.');
+            }
+        });
+        document.getElementById('markcomplete').addEventListener('click', function() {
+            if (selectedItem) {
+                // Get the spans from the selected item
+                const spans = selectedItem.getElementsByTagName("span");
+                    const taskName = spans[0].textContent;
+                    const dateSpan = spans[1].textContent;
+                    const timeSpan = spans[2].textContent;
+                selectedItem.remove(); // Remove the selected <li>
+                    markListed(taskName,dateSpan,timeSpan);
+                location.reload();
+                selectedItem = null; // Reset the selected item
+            } else {
+                alert('Please select an item to mark completed.');
+            }
+        });
+    });
+        function removeTask(task,date,time) {
+            if (task) {
+                fetch('/removetask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ task,date,time }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload(); // Refresh the page to see the updated tasks
+                });
+            }
+        }
+
+        function markListed(task,date,time) {
+            // This function can be expanded based on your needs
+            if(task){
+                fetch('/markcomplete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ task,date,time }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload(); // Refresh the page to see the updated tasks
+                });
+            }
+        }
+    </script>
+</body>
+</html>
