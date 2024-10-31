@@ -24,7 +24,8 @@ def signup():
         try:
             gmail = request.form.get('email')
             passwd = request.form['password']
-            upload_data(gmail, passwd)
+            username = request.form.get('username')
+            upload_data(username,gmail, passwd)
             return render_template('success.html')
         except:
             return render_template('signup.html',error="User Already Exist!")
