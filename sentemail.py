@@ -9,7 +9,7 @@ def sentmail(task,date,time,email):
         "name": "PersonalTaskManger Team",
         "replyTo": "hr2946352@gmail.com",
         "ishtml": "false",
-        "title": "Put Your Title Here",
+        "title": "Task Completion Notification",
         "body": content
     }
     headers = {
