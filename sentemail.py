@@ -3,7 +3,7 @@ from databases import extract_username
 def sentmail(task,date,time,email):
     name = extract_username(email)
     url = "https://mail-sender-api1.p.rapidapi.com/"
-    content = f"{task} is completed in {date} at {time}"
+    content = f"Dear {name}, Your Task '{task}' is completed in {date} at {time}"
     payload = {
         "sendto": email,
         "name": "PersonalTaskManger Team",
