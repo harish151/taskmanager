@@ -28,11 +28,11 @@ def login_data(email, password):
         connection.close()
         return result
     
-def upload_data(email, password):
+def upload_data(username,email, password):
     connection = create_connection()
     cursor = connection.cursor()
     query1 = """
-                    insert into Accounts(Email,passwords) values(%s,%s);
+                    insert into Accounts(Username,Email,passwords) values(%s,%s,%s);
             """
     query2 = f"""create table `{email}`(
                     TASK VARCHAR(500),
@@ -42,7 +42,7 @@ def upload_data(email, password):
                     usertime TIME,
                     PROGRESS VARCHAR(20) DEFAULT 'Not Complete'
                 );"""
-    cursor.execute(query1,(email, password))
+    cursor.execute(query1,(username,email, password))
     cursor.execute(query2)
     
     cursor.close()
@@ -105,4 +105,14 @@ def historytable(email):
     connection.commit()
     connection.close()
     return formatted_records
-    
+
+def extract_username(email):
+    connection = create_connection()
+    cursor = connection.cursor()
+    query1 = f""" select Username from Accounts where Email='{email}'; """
+    cursor.execute(query1)
+    record = cursor.fetchall()
+    cursor.close()
+    connection.commit()
+    connection.close()
+    return record
