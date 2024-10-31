@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account created successfully</title>
+    <link rel="stylesheet"  href="{{url_for('static',filename='styles.css')}}">
+</head>
+<body>
+    <form action="/signup" method="post">
+    <div class="container" id="createdaccount">
+        <h1>Account Created Successfully</h1>
+    <center><a href="{{url_for('login')}}"><button type="button">Login</button></a></center>
+    </div>
+    </form>
+</body>
+</html>
